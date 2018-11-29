@@ -1,19 +1,17 @@
 window.onload = startGame;
+let timerLoop = null;
 
-let mapsObject={};
 let currentMap = [];
-
-
 let numOfBox =0;
 let numOfBoxOnSpot=0;
 
-let currentLevel =0;
+let currentLevel =1;
 const CELL_SIZE = 40;
+const NUM_MAPS =3;
 const gameObjects = {
           player:{
             source: "gfx/player.png",
             sign: "@",
-
           },
           grass:{
             source: "gfx/grass.png",
@@ -46,19 +44,40 @@ const gameObjects = {
 }
 const fps = 30;
 
+
 function startGame(){
-  $.getJSON("maps.json",(data)=>{
-    mapsObject = data;
-    gameCanvas.createCanvas(mapsObject,currentLevel);
-    setInterval(gameLoop,1000/fps);
+  $.getJSON("list_maps/map"+`${currentLevel}`+".json", (jMap)=>{
+    // console.log(jMap);
+    const dataMap = jMap.layers[0].data;
+    const height = jMap.layers[0].height;
+    const width = jMap.layers[0].width;
+    // console.log(dataMap);
+    const tilesets = jMap.tilesets;
+    let firstgidList ={};
+    for(i =0; i <tilesets.length; i++){
+      // console.log(tilesets[i].tileproperties)
+      firstgidList[tilesets[i].firstgid] = tilesets[i].properties["0"].value;
+    }
+    // console.log(firstgidList)
+
+    let map =[];
+    for (i =0; i<height; i++){
+      let row =[];
+      for(j =0; j<width; j++){
+          row.push(firstgidList[dataMap[j+ i*width]])
+      }
+      map.push(row);
+    }
+    currentMap =[...map];
+    // console.log(currentMap)
+    gameCanvas.createCanvas();
+    timerLoop =setInterval(gameLoop,1000/fps);
   });
 }
 
 let gameCanvas= {
   canvas: document.createElement('canvas'),
-  createCanvas: function(maps,level){
-    currentMap = maps.mapLevels[level].map;
-    // console.log(currentMap);
+  createCanvas: function(){
     this.canvas.height = currentMap.length*CELL_SIZE;
     this.canvas.width = currentMap[0].length*CELL_SIZE;
     this.context = this.canvas.getContext("2d");
@@ -215,31 +234,27 @@ function changePosition(keyCode, prevPosX, prevPosY){
       changePrevPosPlayer();
     }
   }
-  // console.log(numOfBoxOnSpot);
 
-// if(numOfBoxOnSpot===numOfBox){
-//   currentLevel++;
-//   numOfBoxOnSpot=0;
-//   numOfBox=0;
-//   gameCanvas.createCanvas(mapsObject,currentLevel);
-// }
-//   gameCanvas.clear();
-//   gameCanvas.drawComponent(currentMap);
 }
-
-
 
 function gameLoop(){
   if(numOfBoxOnSpot===numOfBox){
-    if(currentLevel<mapsObject.mapLevels.length)
+    if(currentLevel<NUM_MAPS){
       currentLevel++;
+      numOfBoxOnSpot=0;
+      numOfBox=0;
+
+      clearInterval(timerLoop)
+      startGame();
+    }
     else {
       alert("You Win!!!")
+      clearInterval(timerLoop)
     }
-    numOfBoxOnSpot=0;
-    numOfBox=0;
-    gameCanvas.createCanvas(mapsObject,currentLevel);
   }
+  //wait after startGame load map => numOfBox != 0, if not currentMap may not load new map
+  if(numOfBox!==0){
     gameCanvas.clear();
     gameCanvas.drawComponent(currentMap);
+  }
 }
