@@ -1,6 +1,6 @@
 window.onload = startGame;
-let timerLoop = null;
-
+// let timerLoop = null;
+let loop;
 let currentMap = [];
 let numOfBox =0;
 let numOfBoxOnSpot=0;
@@ -71,7 +71,7 @@ function startGame(){
     currentMap =[...map];
     // console.log(currentMap)
     gameCanvas.createCanvas();
-    timerLoop =setInterval(gameLoop,1000/fps);
+    // timerLoop =setInterval(gameLoop,1000/fps);
   });
 }
 
@@ -156,7 +156,7 @@ function Component(imgSource,x,y){
   this.y = y;
   this.img = new Image;
   this.img.src = imgSource;
-  ctx = gameCanvas.context;
+  let ctx = gameCanvas.context;
   ctx.drawImage(this.img,this.x, this.y,CELL_SIZE,CELL_SIZE);
 }
 
@@ -238,23 +238,29 @@ function changePosition(keyCode, prevPosX, prevPosY){
 }
 
 function gameLoop(){
-  if(numOfBoxOnSpot===numOfBox){
+  loop =requestAnimationFrame(gameLoop);
+  if(numOfBoxOnSpot===numOfBox&& numOfBoxOnSpot!=0){
     if(currentLevel<NUM_MAPS){
       currentLevel++;
       numOfBoxOnSpot=0;
       numOfBox=0;
 
-      clearInterval(timerLoop)
+      // clearInterval(timerLoop)
       startGame();
     }
     else {
-      alert("You Win!!!")
-      clearInterval(timerLoop)
+      alert("You Win!!!");
+      cancelAnimationFrame(loop);
+      // clearInterval(timerLoop)
+
     }
   }
   //wait after startGame load map => numOfBox != 0, if not currentMap may not load new map
   if(numOfBox!==0){
     gameCanvas.clear();
     gameCanvas.drawComponent(currentMap);
+
   }
+
 }
+requestAnimationFrame(gameLoop);
